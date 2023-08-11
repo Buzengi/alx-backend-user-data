@@ -1,42 +1,52 @@
 #!/usr/bin/env python3
-"""
-The Authentication module.
+""" 
+Require auth with stars 
 """
 from flask import request
 from typing import List, TypeVar
-import fnmatch
+from os import getenv
 
 
-class Auth:
-    """
-    Authentication class.
+class Auth():
+    """ 
+    manage the API authentication 
     """
     def require_auth(self, path: str, excluded_paths: List[str]) -> bool:
         """ 
-        Method to check if auth is required.
+        require authorithation 
         """
-        if path is None:
+        if path is None or excluded_paths is None or not len(excluded_paths):
             return True
-
-        if excluded_paths is None or not excluded_paths:
+        if path[-1] != '/':
+            path += '/'
+        for i in excluded_paths:
+            if i.endswith('*'):
+                if path.startswith(i[:1]):
+                    return False
+        if path in excluded_paths:
+            return False
+        else:
             return True
-
-        for excluded_path in excluded_paths:
-            if fnmatch.fnmatch(path, excluded_path):
-                return False
-
-        return True
 
     def authorization_header(self, request=None) -> str:
         """ 
-        Method to get authorization header.
+        authorization header 
         """
-        if request is not None:
-            return request.headers.get('Authorization', None)
-        return None
+        if request is None:
+            return None
+        if not request.headers.get("Authorization"):
+            return None
+        return request.headers.get("Authorization")
 
     def current_user(self, request=None) -> TypeVar('User'):
-        """ 
-        Method to get user from request.
-        """
+        """ current user """
         return None
+
+    def session_cookie(self, request=None):
+        """ 
+        Module returns a cookie value from a request 
+        """
+        if request is None:
+            return None
+        session_name = getenv('SESSION_NAME')
+        return request.cookies.get(session_name)
